@@ -597,19 +597,27 @@
         padding: 14px;
       }
 
-      /* スマホのプレイ中は、入力欄に集中してもキャラクターが見えるように小さく固定します。 */
+      /* スマホのプレイ中は、キーボード表示中でもキャラクターが見えるように上部へ固定します。 */
       body.is-playing .app {
         padding-top: 8px;
       }
 
+      body.is-playing .game-shell {
+        padding-top: 108px;
+      }
+
       body.is-playing .side-panel {
-        position: sticky;
-        top: 8px;
+        position: fixed;
+        top: calc(8px + env(safe-area-inset-top));
+        left: 8px;
+        right: 8px;
         z-index: 6;
         grid-template-columns: 90px 1fr;
         align-items: center;
         gap: 10px;
         padding: 10px;
+        min-height: 96px;
+        box-shadow: 0 8px 0 rgba(39, 50, 74, 0.16), 0 10px 22px rgba(39, 50, 74, 0.18);
       }
 
       body.is-playing .side-panel > div:first-child {
@@ -642,6 +650,51 @@
         left: -11px;
         top: 26px;
         transform: rotate(-45deg);
+      }
+
+      body.is-playing .status-grid {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 6px;
+      }
+
+      body.is-playing .status-box {
+        min-height: 58px;
+        padding: 7px 4px;
+        border-width: 2px;
+      }
+
+      body.is-playing .status-label {
+        font-size: 0.68rem;
+      }
+
+      body.is-playing .status-value {
+        font-size: 1.12rem;
+      }
+
+      body.is-playing .difficulty-group {
+        display: none;
+      }
+
+      body.is-playing .control-row {
+        justify-content: center;
+      }
+
+      body.is-playing .btn {
+        min-height: 44px;
+        width: min(100%, 220px);
+      }
+
+      body.is-playing .quest-area {
+        min-height: 190px;
+        gap: 10px;
+      }
+
+      body.is-playing .question {
+        font-size: clamp(2rem, 12vw, 3.4rem);
+      }
+
+      body.is-playing .answer-input {
+        min-height: 62px;
       }
     }
   </style>
