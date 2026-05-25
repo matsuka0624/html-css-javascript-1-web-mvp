@@ -156,6 +156,8 @@
       width: 142px;
       height: 164px;
       margin-bottom: 18px;
+      --hero-scale: 1;
+      transform: scale(var(--hero-scale));
       transform-origin: bottom center;
     }
 
@@ -509,10 +511,10 @@
     }
 
     @keyframes heroJump {
-      0%, 100% { transform: translateY(0) scaleY(1); }
-      35% { transform: translateY(-42px) rotate(-3deg); }
-      60% { transform: translateY(0) scaleY(0.94) scaleX(1.04); }
-      78% { transform: translateY(-12px); }
+      0%, 100% { transform: translateY(0) scale(var(--hero-scale)) scaleY(1); }
+      35% { transform: translateY(-42px) scale(var(--hero-scale)) rotate(-3deg); }
+      60% { transform: translateY(0) scale(var(--hero-scale)) scaleY(0.94) scaleX(1.04); }
+      78% { transform: translateY(-12px) scale(var(--hero-scale)); }
     }
 
     @keyframes sparkleSweep {
@@ -593,6 +595,53 @@
       .quest-area {
         min-height: 230px;
         padding: 14px;
+      }
+
+      /* スマホのプレイ中は、入力欄に集中してもキャラクターが見えるように小さく固定します。 */
+      body.is-playing .app {
+        padding-top: 8px;
+      }
+
+      body.is-playing .side-panel {
+        position: sticky;
+        top: 8px;
+        z-index: 6;
+        grid-template-columns: 90px 1fr;
+        align-items: center;
+        gap: 10px;
+        padding: 10px;
+      }
+
+      body.is-playing .side-panel > div:first-child {
+        display: none;
+      }
+
+      body.is-playing .hero-stage {
+        min-height: 86px;
+        height: 86px;
+        border-width: 2px;
+      }
+
+      body.is-playing .hero-stage::before {
+        display: none;
+      }
+
+      body.is-playing .hero-avatar {
+        --hero-scale: 0.48;
+        margin-bottom: -35px;
+      }
+
+      body.is-playing .speech {
+        grid-column: auto;
+        min-height: 64px;
+        padding: 8px 10px;
+        font-size: 0.92rem;
+      }
+
+      body.is-playing .speech::before {
+        left: -11px;
+        top: 26px;
+        transform: rotate(-45deg);
       }
     }
   </style>
@@ -911,12 +960,13 @@
       elements.questionText.textContent = state.currentQuestion;
       elements.answerInput.value = "";
       elements.answerInput.classList.remove("wrong");
-      elements.answerInput.focus();
+      elements.answerInput.focus({ preventScroll: true });
     }
 
     function startGame() {
       clearInterval(state.timerId);
       state.running = true;
+      document.body.classList.add("is-playing");
       state.difficulty = getSelectedDifficulty();
       state.score = 0;
       state.streak = 0;
@@ -942,6 +992,7 @@
     function endGame() {
       clearInterval(state.timerId);
       state.running = false;
+      document.body.classList.remove("is-playing");
       elements.answerInput.disabled = true;
       elements.startButton.textContent = "スタート";
       elements.finalScore.textContent = state.score;
