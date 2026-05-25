@@ -1,0 +1,1073 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ローマ字ぼうけんタイピング</title>
+  <style>
+    /*
+      MVPはこの1ファイルで完結します。
+      後から画像を足す場合は .hero-avatar の中身や背景だけ差し替える想定です。
+    */
+    :root {
+      --sky: #9bdcff;
+      --grass: #6bd76b;
+      --leaf: #2f9b64;
+      --sun: #ffd35d;
+      --card: #fff9e8;
+      --ink: #27324a;
+      --muted: #66708a;
+      --accent: #ff7a59;
+      --accent-dark: #d94d34;
+      --magic: #5b7cfa;
+      --good: #18a66a;
+      --border: #3f4d6a;
+      --shadow: 0 16px 0 rgba(39, 50, 74, 0.18), 0 18px 34px rgba(39, 50, 74, 0.2);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      color: var(--ink);
+      font-family: "Hiragino Maru Gothic ProN", "Yu Gothic", "Meiryo", system-ui, sans-serif;
+      background:
+        radial-gradient(circle at 18% 16%, rgba(255, 211, 93, 0.95) 0 46px, transparent 48px),
+        linear-gradient(#8edbff 0 58%, #94e383 58% 100%);
+      overflow-x: hidden;
+    }
+
+    body::before,
+    body::after {
+      content: "";
+      position: fixed;
+      inset: auto 0 0;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    body::before {
+      height: 35vh;
+      background:
+        radial-gradient(ellipse at 10% 100%, #4db96a 0 28%, transparent 29%),
+        radial-gradient(ellipse at 42% 105%, #63cd72 0 34%, transparent 35%),
+        radial-gradient(ellipse at 82% 104%, #4ebd66 0 31%, transparent 32%);
+      opacity: 0.75;
+    }
+
+    body::after {
+      height: 95px;
+      background:
+        linear-gradient(90deg, transparent 0 10px, rgba(255,255,255,0.32) 10px 13px, transparent 13px 32px),
+        linear-gradient(#83c86e, #52aa5d);
+      border-top: 4px solid rgba(47, 155, 100, 0.5);
+    }
+
+    button,
+    input {
+      font: inherit;
+    }
+
+    .app {
+      position: relative;
+      z-index: 1;
+      width: min(1040px, calc(100% - 28px));
+      min-height: 100vh;
+      margin: 0 auto;
+      padding: 22px 0 32px;
+      display: grid;
+      align-items: center;
+    }
+
+    .game-shell {
+      display: grid;
+      grid-template-columns: minmax(230px, 320px) 1fr;
+      gap: 18px;
+      align-items: stretch;
+    }
+
+    .side-panel,
+    .main-card,
+    .end-card {
+      border: 4px solid var(--border);
+      border-radius: 8px;
+      background: var(--card);
+      box-shadow: var(--shadow);
+    }
+
+    .side-panel {
+      padding: 18px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      gap: 16px;
+      min-height: 540px;
+    }
+
+    .title {
+      margin: 0;
+      font-size: clamp(1.65rem, 3vw, 2.05rem);
+      line-height: 1.15;
+      color: #2d4365;
+    }
+
+    .title span {
+      display: block;
+    }
+
+    .subtitle {
+      margin: 8px 0 0;
+      color: var(--muted);
+      font-weight: 700;
+      line-height: 1.6;
+    }
+
+    .hero-stage {
+      min-height: 210px;
+      display: grid;
+      place-items: end center;
+      border-radius: 8px;
+      background:
+        linear-gradient(180deg, rgba(255,255,255,0.9), rgba(255,255,255,0.3) 45%, transparent 46%),
+        linear-gradient(180deg, #bdf0ff 0 55%, #8bdb78 56% 100%);
+      border: 3px solid #6a7b98;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .hero-stage::before {
+      content: "";
+      position: absolute;
+      left: 18px;
+      top: 24px;
+      width: 88px;
+      height: 38px;
+      border-radius: 999px;
+      background: #fff;
+      box-shadow: 70px 10px 0 -8px #fff, 138px 0 0 -14px #fff;
+      opacity: 0.9;
+    }
+
+    .hero-avatar {
+      position: relative;
+      width: 142px;
+      height: 164px;
+      margin-bottom: 18px;
+      transform-origin: bottom center;
+    }
+
+    .hero-avatar.jump {
+      animation: heroJump 560ms cubic-bezier(.2,.8,.25,1);
+    }
+
+    .hero-avatar::before {
+      content: "";
+      position: absolute;
+      left: 23px;
+      top: 26px;
+      width: 96px;
+      height: 108px;
+      border-radius: 48px 48px 34px 34px;
+      background: #ffcf92;
+      border: 4px solid #2f3a56;
+      box-shadow: inset 0 -16px 0 rgba(208, 110, 61, 0.18);
+    }
+
+    .hero-avatar::after {
+      content: "";
+      position: absolute;
+      left: 34px;
+      top: 0;
+      width: 74px;
+      height: 48px;
+      border-radius: 14px 14px 8px 8px;
+      background: #5b7cfa;
+      border: 4px solid #2f3a56;
+      transform: rotate(-5deg);
+      box-shadow: 22px 12px 0 -8px #ffd35d;
+    }
+
+    .face {
+      position: absolute;
+      left: 44px;
+      top: 64px;
+      width: 56px;
+      height: 36px;
+      z-index: 2;
+    }
+
+    .face::before,
+    .face::after {
+      content: "";
+      position: absolute;
+      top: 0;
+      width: 10px;
+      height: 14px;
+      border-radius: 999px;
+      background: #25314d;
+    }
+
+    .face::before { left: 4px; }
+    .face::after { right: 4px; }
+
+    .smile {
+      position: absolute;
+      left: 17px;
+      top: 19px;
+      width: 23px;
+      height: 12px;
+      border-bottom: 4px solid #25314d;
+      border-radius: 0 0 20px 20px;
+    }
+
+    .cape {
+      position: absolute;
+      left: 19px;
+      top: 87px;
+      width: 102px;
+      height: 58px;
+      background: #ff7a59;
+      border: 4px solid #2f3a56;
+      border-radius: 14px 14px 28px 28px;
+      z-index: -1;
+    }
+
+    .speech {
+      min-height: 76px;
+      padding: 12px 14px;
+      border: 3px solid #6a7b98;
+      border-radius: 8px;
+      background: white;
+      font-weight: 800;
+      line-height: 1.5;
+      position: relative;
+    }
+
+    .speech::before {
+      content: "";
+      position: absolute;
+      left: 34px;
+      top: -14px;
+      width: 20px;
+      height: 20px;
+      background: white;
+      border-left: 3px solid #6a7b98;
+      border-top: 3px solid #6a7b98;
+      transform: rotate(45deg);
+    }
+
+    .main-card {
+      padding: 20px;
+      min-height: 540px;
+      display: grid;
+      grid-template-rows: auto auto 1fr auto;
+      gap: 16px;
+    }
+
+    .status-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .status-box {
+      min-height: 78px;
+      padding: 10px;
+      border-radius: 8px;
+      border: 3px solid #7989a8;
+      background: #fff;
+      display: grid;
+      align-content: center;
+      gap: 4px;
+      text-align: center;
+    }
+
+    .status-label {
+      color: var(--muted);
+      font-size: 0.8rem;
+      font-weight: 800;
+    }
+
+    .status-value {
+      font-size: clamp(1.25rem, 3vw, 1.7rem);
+      font-weight: 900;
+      color: #27324a;
+      line-height: 1;
+    }
+
+    .control-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .difficulty-group {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+      flex: 1 1 360px;
+    }
+
+    .difficulty-option input {
+      position: absolute;
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .difficulty-option span {
+      display: grid;
+      min-height: 50px;
+      place-items: center;
+      border: 3px solid #71809e;
+      border-radius: 8px;
+      background: #fff;
+      font-weight: 900;
+      cursor: pointer;
+      transition: transform 140ms ease, background 140ms ease, border-color 140ms ease;
+    }
+
+    .difficulty-option input:checked + span {
+      background: #fff0a8;
+      border-color: #c78c22;
+      transform: translateY(-2px);
+    }
+
+    .btn {
+      min-height: 54px;
+      min-width: 150px;
+      padding: 0 20px;
+      border: 0;
+      border-radius: 8px;
+      background: linear-gradient(#ff9b72, var(--accent));
+      color: white;
+      font-size: 1.05rem;
+      font-weight: 900;
+      cursor: pointer;
+      box-shadow: 0 6px 0 var(--accent-dark);
+      transition: transform 120ms ease, box-shadow 120ms ease, filter 120ms ease;
+    }
+
+    .btn:hover,
+    .btn:focus-visible {
+      filter: brightness(1.05);
+      outline: 3px solid rgba(91, 124, 250, 0.35);
+      outline-offset: 3px;
+    }
+
+    .btn:active {
+      transform: translateY(4px);
+      box-shadow: 0 2px 0 var(--accent-dark);
+    }
+
+    .btn.secondary {
+      background: linear-gradient(#6e8cff, var(--magic));
+      box-shadow: 0 6px 0 #3d55c2;
+    }
+
+    .quest-area {
+      display: grid;
+      align-content: center;
+      gap: 16px;
+      text-align: center;
+      border: 3px dashed #8b98b4;
+      border-radius: 8px;
+      background:
+        linear-gradient(90deg, rgba(255,255,255,0.72), rgba(255,255,255,0.92)),
+        repeating-linear-gradient(45deg, #fff8cf 0 12px, #fff2b0 12px 24px);
+      padding: 18px;
+      min-height: 250px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .quest-area.correct-flash::after {
+      content: "";
+      position: absolute;
+      inset: -35%;
+      background: linear-gradient(110deg, transparent 20%, rgba(255,255,255,0.9) 42%, transparent 62%);
+      transform: translateX(-80%);
+      animation: sparkleSweep 620ms ease-out;
+    }
+
+    .quest-label {
+      margin: 0;
+      color: var(--muted);
+      font-weight: 900;
+      letter-spacing: 0;
+    }
+
+    .question {
+      margin: 0;
+      font-size: clamp(2.3rem, 8vw, 4.6rem);
+      line-height: 1.15;
+      font-weight: 900;
+      color: #27324a;
+      word-break: keep-all;
+      overflow-wrap: anywhere;
+    }
+
+    .answer-input {
+      width: min(100%, 620px);
+      min-height: 72px;
+      margin: 0 auto;
+      padding: 10px 16px;
+      border: 4px solid #5f6e8d;
+      border-radius: 8px;
+      background: #fff;
+      color: var(--ink);
+      font-size: clamp(1.6rem, 6vw, 2.45rem);
+      font-weight: 900;
+      text-align: center;
+      outline: none;
+      box-shadow: inset 0 4px 0 rgba(39, 50, 74, 0.08);
+    }
+
+    .answer-input:focus {
+      border-color: var(--magic);
+      box-shadow: 0 0 0 5px rgba(91, 124, 250, 0.18), inset 0 4px 0 rgba(39, 50, 74, 0.08);
+    }
+
+    .answer-input.wrong {
+      animation: shake 240ms ease-in-out;
+      border-color: #ef4f55;
+    }
+
+    .message-row {
+      min-height: 36px;
+      display: grid;
+      place-items: center;
+      font-size: 1.05rem;
+      font-weight: 900;
+      color: var(--good);
+    }
+
+    .bonus {
+      position: fixed;
+      left: 50%;
+      top: 22%;
+      z-index: 8;
+      padding: 14px 22px;
+      border: 4px solid #3f4d6a;
+      border-radius: 8px;
+      background: #fff0a8;
+      color: #b05e00;
+      font-size: clamp(1.4rem, 6vw, 2.4rem);
+      font-weight: 900;
+      text-align: center;
+      transform: translate(-50%, -50%) scale(0);
+      opacity: 0;
+      pointer-events: none;
+      box-shadow: 0 12px 0 rgba(39, 50, 74, 0.18);
+    }
+
+    .bonus.show {
+      animation: bonusPop 1000ms ease-out;
+    }
+
+    .end-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 10;
+      display: none;
+      place-items: center;
+      padding: 18px;
+      background: rgba(27, 38, 63, 0.55);
+      backdrop-filter: blur(3px);
+    }
+
+    .end-overlay.open {
+      display: grid;
+    }
+
+    .end-card {
+      width: min(560px, 100%);
+      padding: 24px;
+      text-align: center;
+      background: #fffdf4;
+    }
+
+    .end-card h2 {
+      margin: 0 0 12px;
+      font-size: clamp(2rem, 7vw, 3.4rem);
+      color: #2d4365;
+    }
+
+    .end-result {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      margin: 18px 0;
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    @keyframes heroJump {
+      0%, 100% { transform: translateY(0) scaleY(1); }
+      35% { transform: translateY(-42px) rotate(-3deg); }
+      60% { transform: translateY(0) scaleY(0.94) scaleX(1.04); }
+      78% { transform: translateY(-12px); }
+    }
+
+    @keyframes sparkleSweep {
+      0% { transform: translateX(-80%); }
+      100% { transform: translateX(110%); }
+    }
+
+    @keyframes shake {
+      0%, 100% { transform: translateX(0); }
+      25% { transform: translateX(-7px); }
+      75% { transform: translateX(7px); }
+    }
+
+    @keyframes bonusPop {
+      0% { opacity: 0; transform: translate(-50%, -50%) scale(0.6) rotate(-3deg); }
+      18% { opacity: 1; transform: translate(-50%, -50%) scale(1.08) rotate(2deg); }
+      62% { opacity: 1; transform: translate(-50%, -58%) scale(1); }
+      100% { opacity: 0; transform: translate(-50%, -82%) scale(0.92); }
+    }
+
+    @media (max-width: 820px) {
+      .app {
+        align-items: start;
+        padding-top: 14px;
+      }
+
+      .game-shell {
+        grid-template-columns: 1fr;
+      }
+
+      .side-panel,
+      .main-card {
+        min-height: auto;
+      }
+
+      .side-panel {
+        display: grid;
+        grid-template-columns: 1fr minmax(150px, 210px);
+      }
+
+      .hero-stage {
+        min-height: 180px;
+      }
+
+      .speech {
+        grid-column: 1 / -1;
+      }
+    }
+
+    @media (max-width: 620px) {
+      .app {
+        width: min(100% - 18px, 1040px);
+      }
+
+      .side-panel {
+        grid-template-columns: 1fr;
+        padding: 14px;
+      }
+
+      .main-card {
+        padding: 14px;
+      }
+
+      .status-grid,
+      .end-result {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .difficulty-group {
+        grid-template-columns: 1fr;
+        flex-basis: 100%;
+      }
+
+      .btn {
+        width: 100%;
+      }
+
+      .quest-area {
+        min-height: 230px;
+        padding: 14px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <section class="game-shell" aria-label="ローマ字入力練習ゲーム">
+      <aside class="side-panel">
+        <div>
+          <h1 class="title">
+            <span>ローマ字</span>
+            <span>ぼうけん</span>
+            <span>タイピング</span>
+          </h1>
+          <p class="subtitle">出されたひらがなをローマ字で入力して、旅を進めよう。</p>
+        </div>
+
+        <div class="hero-stage" aria-hidden="true">
+          <div class="hero-avatar" id="heroAvatar">
+            <div class="cape"></div>
+            <div class="face"><div class="smile"></div></div>
+          </div>
+        </div>
+
+        <div class="speech" id="speechBubble">じゅんびができたら、スタートをおしてね！</div>
+      </aside>
+
+      <section class="main-card">
+        <div class="status-grid" aria-label="ゲームの状態">
+          <div class="status-box">
+            <span class="status-label">スコア</span>
+            <span class="status-value" id="scoreText">0</span>
+          </div>
+          <div class="status-box">
+            <span class="status-label">れんぞく</span>
+            <span class="status-value" id="streakText">0</span>
+          </div>
+          <div class="status-box">
+            <span class="status-label">ランク</span>
+            <span class="status-value" id="rankText">F</span>
+          </div>
+          <div class="status-box">
+            <span class="status-label">のこり</span>
+            <span class="status-value" id="timeText">60</span>
+          </div>
+        </div>
+
+        <div class="control-row">
+          <div class="difficulty-group" aria-label="難易度選択">
+            <label class="difficulty-option">
+              <input type="radio" name="difficulty" value="easy" checked>
+              <span>かんたん</span>
+            </label>
+            <label class="difficulty-option">
+              <input type="radio" name="difficulty" value="normal">
+              <span>ふつう</span>
+            </label>
+            <label class="difficulty-option">
+              <input type="radio" name="difficulty" value="hard">
+              <span>むずかしい</span>
+            </label>
+          </div>
+          <button class="btn" id="startButton" type="button">スタート</button>
+        </div>
+
+        <div class="quest-area" id="questArea">
+          <p class="quest-label">もんだい</p>
+          <p class="question" id="questionText">---</p>
+          <input
+            class="answer-input"
+            id="answerInput"
+            type="text"
+            inputmode="latin"
+            autocomplete="off"
+            autocapitalize="off"
+            spellcheck="false"
+            placeholder="ここに入力"
+            disabled
+            aria-label="ローマ字入力欄"
+          >
+        </div>
+
+        <div class="message-row" id="messageText">難易度をえらんでスタート！</div>
+      </section>
+    </section>
+  </main>
+
+  <div class="bonus" id="bonusText">5れんぞくボーナス！</div>
+
+  <div class="end-overlay" id="endOverlay" role="dialog" aria-modal="true" aria-labelledby="endTitle">
+    <div class="end-card">
+      <h2 id="endTitle">ぼうけん終了！</h2>
+      <p id="endMessage">よくがんばったね！</p>
+      <div class="end-result">
+        <div class="status-box">
+          <span class="status-label">スコア</span>
+          <span class="status-value" id="finalScore">0</span>
+        </div>
+        <div class="status-box">
+          <span class="status-label">最高れんぞく</span>
+          <span class="status-value" id="finalBestStreak">0</span>
+        </div>
+        <div class="status-box">
+          <span class="status-label">ランク</span>
+          <span class="status-value" id="finalRank">F</span>
+        </div>
+      </div>
+      <button class="btn secondary" id="retryButton" type="button">もう一度遊ぶ</button>
+    </div>
+  </div>
+
+  <script>
+    /*
+      追加しやすい場所:
+      - PRAISES: ほめ言葉
+      - QUESTIONS: 難易度ごとの問題
+      - ROMAJI_TABLE / SPECIAL_PATTERNS: ローマ字判定ルール
+      - playCorrectSound: 後から音声ファイル再生に差し替え可能
+    */
+
+    const GAME_SECONDS = 60;
+
+    const PRAISES = [
+      "すごい！",
+      "その調子！",
+      "ローマ字マスターに近づいてる！",
+      "ナイス入力！",
+      "冒険が進んだね！",
+      "いいリズム！",
+      "ひらめきが光ってる！"
+    ];
+
+    const QUESTIONS = {
+      easy: ["あ", "い", "う", "え", "お", "か", "き", "く", "け", "こ", "さ", "し", "す", "せ", "そ", "た", "ち", "つ", "て", "と", "な", "に", "ぬ", "ね", "の", "は", "ひ", "ふ", "へ", "ほ"],
+      normal: ["きゃ", "しゅ", "がっこう", "にんじゃ", "ちゃわん", "しっぽ", "きって", "みゃく", "りゅう", "じゃんけん", "ふうせん", "ちず", "つくえ"],
+      hard: ["ぼうけんにでかけよう", "まほうをとなえる", "ゆうしゃがたびをする", "ちいさなむらをまもる", "ひみつのちずをひらく", "きらきらひかるたからもの", "にんじゃがしろへむかう"]
+    };
+
+    const DIFFICULTY_LABELS = {
+      easy: "かんたん",
+      normal: "ふつう",
+      hard: "むずかしい"
+    };
+
+    // 基本のかな。配列にしているものは複数の正解パターンを許可します。
+    const ROMAJI_TABLE = {
+      "あ": ["a"], "い": ["i"], "う": ["u"], "え": ["e"], "お": ["o"],
+      "か": ["ka"], "き": ["ki"], "く": ["ku"], "け": ["ke"], "こ": ["ko"],
+      "さ": ["sa"], "し": ["si", "shi"], "す": ["su"], "せ": ["se"], "そ": ["so"],
+      "た": ["ta"], "ち": ["ti", "chi"], "つ": ["tu", "tsu"], "て": ["te"], "と": ["to"],
+      "な": ["na"], "に": ["ni"], "ぬ": ["nu"], "ね": ["ne"], "の": ["no"],
+      "は": ["ha"], "ひ": ["hi"], "ふ": ["hu", "fu"], "へ": ["he"], "ほ": ["ho"],
+      "ま": ["ma"], "み": ["mi"], "む": ["mu"], "め": ["me"], "も": ["mo"],
+      "や": ["ya"], "ゆ": ["yu"], "よ": ["yo"],
+      "ら": ["ra"], "り": ["ri"], "る": ["ru"], "れ": ["re"], "ろ": ["ro"],
+      "わ": ["wa"], "を": ["wo", "o"], "ん": ["n", "nn"],
+      "が": ["ga"], "ぎ": ["gi"], "ぐ": ["gu"], "げ": ["ge"], "ご": ["go"],
+      "ざ": ["za"], "じ": ["zi", "ji"], "ず": ["zu"], "ぜ": ["ze"], "ぞ": ["zo"],
+      "だ": ["da"], "ぢ": ["di", "ji"], "づ": ["du", "zu"], "で": ["de"], "ど": ["do"],
+      "ば": ["ba"], "び": ["bi"], "ぶ": ["bu"], "べ": ["be"], "ぼ": ["bo"],
+      "ぱ": ["pa"], "ぴ": ["pi"], "ぷ": ["pu"], "ぺ": ["pe"], "ぽ": ["po"],
+      "ぁ": ["xa", "la"], "ぃ": ["xi", "li"], "ぅ": ["xu", "lu"], "ぇ": ["xe", "le"], "ぉ": ["xo", "lo"],
+      "ゃ": ["xya", "lya"], "ゅ": ["xyu", "lyu"], "ょ": ["xyo", "lyo"],
+      "ー": ["-"]
+    };
+
+    // 拗音など、2文字で1音になるもの。長い候補から先に読むため、基本表より優先します。
+    const SPECIAL_PATTERNS = {
+      "きゃ": ["kya"], "きゅ": ["kyu"], "きょ": ["kyo"],
+      "しゃ": ["sya", "sha"], "しゅ": ["syu", "shu"], "しょ": ["syo", "sho"],
+      "ちゃ": ["tya", "cha"], "ちゅ": ["tyu", "chu"], "ちょ": ["tyo", "cho"],
+      "にゃ": ["nya"], "にゅ": ["nyu"], "にょ": ["nyo"],
+      "ひゃ": ["hya"], "ひゅ": ["hyu"], "ひょ": ["hyo"],
+      "みゃ": ["mya"], "みゅ": ["myu"], "みょ": ["myo"],
+      "りゃ": ["rya"], "りゅ": ["ryu"], "りょ": ["ryo"],
+      "ぎゃ": ["gya"], "ぎゅ": ["gyu"], "ぎょ": ["gyo"],
+      "じゃ": ["ja", "zya", "jya"], "じゅ": ["ju", "zyu", "jyu"], "じょ": ["jo", "zyo", "jyo"],
+      "びゃ": ["bya"], "びゅ": ["byu"], "びょ": ["byo"],
+      "ぴゃ": ["pya"], "ぴゅ": ["pyu"], "ぴょ": ["pyo"]
+    };
+
+    const state = {
+      running: false,
+      difficulty: "easy",
+      currentQuestion: "",
+      currentAnswers: [],
+      previousQuestion: "",
+      score: 0,
+      streak: 0,
+      bestStreak: 0,
+      timeLeft: GAME_SECONDS,
+      timerId: null,
+      audioContext: null
+    };
+
+    const elements = {
+      heroAvatar: document.getElementById("heroAvatar"),
+      speechBubble: document.getElementById("speechBubble"),
+      scoreText: document.getElementById("scoreText"),
+      streakText: document.getElementById("streakText"),
+      rankText: document.getElementById("rankText"),
+      timeText: document.getElementById("timeText"),
+      startButton: document.getElementById("startButton"),
+      answerInput: document.getElementById("answerInput"),
+      questionText: document.getElementById("questionText"),
+      questArea: document.getElementById("questArea"),
+      messageText: document.getElementById("messageText"),
+      bonusText: document.getElementById("bonusText"),
+      endOverlay: document.getElementById("endOverlay"),
+      endMessage: document.getElementById("endMessage"),
+      finalScore: document.getElementById("finalScore"),
+      finalBestStreak: document.getElementById("finalBestStreak"),
+      finalRank: document.getElementById("finalRank"),
+      retryButton: document.getElementById("retryButton")
+    };
+
+    function getSelectedDifficulty() {
+      return document.querySelector("input[name='difficulty']:checked").value;
+    }
+
+    function getRank(score) {
+      if (score >= 700) return "S";
+      if (score >= 520) return "A";
+      if (score >= 360) return "B";
+      if (score >= 220) return "C";
+      if (score >= 100) return "D";
+      return "F";
+    }
+
+    function updateStatus() {
+      elements.scoreText.textContent = state.score;
+      elements.streakText.textContent = state.streak;
+      elements.rankText.textContent = getRank(state.score);
+      elements.timeText.textContent = state.timeLeft;
+    }
+
+    function sample(list) {
+      return list[Math.floor(Math.random() * list.length)];
+    }
+
+    function pickQuestion() {
+      const list = QUESTIONS[state.difficulty];
+      let next = sample(list);
+      if (list.length > 1) {
+        while (next === state.previousQuestion) next = sample(list);
+      }
+      state.previousQuestion = next;
+      return next;
+    }
+
+    function unique(list) {
+      return [...new Set(list)];
+    }
+
+    function combine(prefixes, suffixes) {
+      const results = [];
+      prefixes.forEach((prefix) => {
+        suffixes.forEach((suffix) => results.push(prefix + suffix));
+      });
+      return unique(results);
+    }
+
+    function startsWithVowelSound(romaji) {
+      return /^[aiueoyn]/.test(romaji);
+    }
+
+    /*
+      ひらがなから許可するローマ字候補を作ります。
+      促音「っ」は次の音の頭文字を重ね、んは n / nn の両方を許可します。
+    */
+    function buildRomajiCandidates(text) {
+      let candidates = [""];
+
+      for (let index = 0; index < text.length; index += 1) {
+        const char = text[index];
+
+        if (char === "っ") {
+          const nextOptions = getKanaOptions(text, index + 1);
+          const consonants = unique(nextOptions
+            .map((option) => option[0])
+            .filter((letter) => letter && !/[aiueon]/.test(letter)));
+          candidates = combine(candidates, consonants.length ? consonants : ["xtu", "ltu"]);
+          continue;
+        }
+
+        const twoChars = text.slice(index, index + 2);
+        if (SPECIAL_PATTERNS[twoChars]) {
+          candidates = combine(candidates, SPECIAL_PATTERNS[twoChars]);
+          index += 1;
+          continue;
+        }
+
+        if (char === "ん") {
+          const nextOptions = getKanaOptions(text, index + 1);
+          const nextNeedsDoubleN = nextOptions.some(startsWithVowelSound);
+          candidates = combine(candidates, nextNeedsDoubleN ? ["nn"] : ["n", "nn"]);
+          continue;
+        }
+
+        candidates = combine(candidates, ROMAJI_TABLE[char] || [char]);
+      }
+
+      return unique(candidates);
+    }
+
+    function getKanaOptions(text, index) {
+      if (index >= text.length) return [""];
+      const twoChars = text.slice(index, index + 2);
+      if (SPECIAL_PATTERNS[twoChars]) return SPECIAL_PATTERNS[twoChars];
+      return ROMAJI_TABLE[text[index]] || [text[index]];
+    }
+
+    function showQuestion() {
+      state.currentQuestion = pickQuestion();
+      state.currentAnswers = buildRomajiCandidates(state.currentQuestion);
+      elements.questionText.textContent = state.currentQuestion;
+      elements.answerInput.value = "";
+      elements.answerInput.classList.remove("wrong");
+      elements.answerInput.focus();
+    }
+
+    function startGame() {
+      clearInterval(state.timerId);
+      state.running = true;
+      state.difficulty = getSelectedDifficulty();
+      state.score = 0;
+      state.streak = 0;
+      state.bestStreak = 0;
+      state.timeLeft = GAME_SECONDS;
+      state.previousQuestion = "";
+      elements.endOverlay.classList.remove("open");
+      elements.answerInput.disabled = false;
+      elements.startButton.textContent = "やり直す";
+      elements.speechBubble.textContent = `${DIFFICULTY_LABELS[state.difficulty]}の旅へ出発！`;
+      elements.messageText.textContent = "入力したら自動で判定するよ";
+      updateStatus();
+      showQuestion();
+      prepareAudio();
+
+      state.timerId = setInterval(() => {
+        state.timeLeft -= 1;
+        updateStatus();
+        if (state.timeLeft <= 0) endGame();
+      }, 1000);
+    }
+
+    function endGame() {
+      clearInterval(state.timerId);
+      state.running = false;
+      elements.answerInput.disabled = true;
+      elements.startButton.textContent = "スタート";
+      elements.finalScore.textContent = state.score;
+      elements.finalBestStreak.textContent = state.bestStreak;
+      elements.finalRank.textContent = getRank(state.score);
+      elements.endMessage.textContent = buildEndMessage();
+      elements.endOverlay.classList.add("open");
+      elements.retryButton.focus();
+    }
+
+    function buildEndMessage() {
+      const rank = getRank(state.score);
+      if (rank === "S" || rank === "A") return "すばらしい冒険だったね！ローマ字の力がかなり上がったよ。";
+      if (rank === "B" || rank === "C") return "いい旅だったね！次はもっと遠くまで行けそう。";
+      return "さいしょの一歩は大成功！もう一度遊ぶとどんどん速くなるよ。";
+    }
+
+    function checkAnswer() {
+      if (!state.running) return;
+      const value = elements.answerInput.value.trim().toLowerCase();
+      const isCorrect = state.currentAnswers.includes(value);
+
+      if (!isCorrect) {
+        const couldBecomeCorrect = state.currentAnswers.some((answer) => answer.startsWith(value));
+        if (value && !couldBecomeCorrect) showWrongFeedback();
+        return;
+      }
+
+      handleCorrectAnswer();
+    }
+
+    function handleCorrectAnswer() {
+      const basePoint = state.difficulty === "easy" ? 10 : state.difficulty === "normal" ? 18 : 28;
+      const streakBonus = Math.min(state.streak, 10);
+      state.streak += 1;
+      state.bestStreak = Math.max(state.bestStreak, state.streak);
+      state.score += basePoint + streakBonus;
+
+      const praise = sample(PRAISES);
+      elements.speechBubble.textContent = praise;
+      elements.messageText.textContent = praise;
+      updateStatus();
+      playCorrectEffects();
+      playCorrectSound();
+
+      if (state.streak % 5 === 0) {
+        state.score += 30;
+        updateStatus();
+        showBonus();
+      }
+
+      window.setTimeout(showQuestion, 180);
+    }
+
+    function showWrongFeedback() {
+      state.streak = 0;
+      updateStatus();
+      elements.messageText.textContent = "おしい！もう一回ためしてみよう";
+      elements.answerInput.classList.remove("wrong");
+      void elements.answerInput.offsetWidth;
+      elements.answerInput.classList.add("wrong");
+    }
+
+    function playCorrectEffects() {
+      elements.heroAvatar.classList.remove("jump");
+      elements.questArea.classList.remove("correct-flash");
+      void elements.heroAvatar.offsetWidth;
+      elements.heroAvatar.classList.add("jump");
+      elements.questArea.classList.add("correct-flash");
+    }
+
+    function showBonus() {
+      elements.bonusText.textContent = `${state.streak}れんぞくボーナス！`;
+      elements.bonusText.classList.remove("show");
+      void elements.bonusText.offsetWidth;
+      elements.bonusText.classList.add("show");
+    }
+
+    function prepareAudio() {
+      if (!state.audioContext) {
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        if (AudioContext) state.audioContext = new AudioContext();
+      }
+      if (state.audioContext && state.audioContext.state === "suspended") {
+        state.audioContext.resume();
+      }
+    }
+
+    function playTone(frequency, startTime, duration, gainValue) {
+      if (!state.audioContext) return;
+      const oscillator = state.audioContext.createOscillator();
+      const gain = state.audioContext.createGain();
+      oscillator.type = "triangle";
+      oscillator.frequency.setValueAtTime(frequency, startTime);
+      gain.gain.setValueAtTime(0.0001, startTime);
+      gain.gain.exponentialRampToValueAtTime(gainValue, startTime + 0.02);
+      gain.gain.exponentialRampToValueAtTime(0.0001, startTime + duration);
+      oscillator.connect(gain);
+      gain.connect(state.audioContext.destination);
+      oscillator.start(startTime);
+      oscillator.stop(startTime + duration + 0.02);
+    }
+
+    function playCorrectSound() {
+      prepareAudio();
+      if (!state.audioContext) return;
+      const now = state.audioContext.currentTime;
+      playTone(660, now, 0.12, 0.08);
+      playTone(880, now + 0.08, 0.13, 0.08);
+      if (state.streak % 5 === 0) playTone(1174, now + 0.18, 0.18, 0.09);
+    }
+
+    elements.startButton.addEventListener("click", startGame);
+    elements.retryButton.addEventListener("click", startGame);
+    elements.answerInput.addEventListener("input", checkAnswer);
+
+    document.querySelectorAll("input[name='difficulty']").forEach((radio) => {
+      radio.addEventListener("change", () => {
+        if (!state.running) {
+          state.difficulty = getSelectedDifficulty();
+          elements.speechBubble.textContent = `${DIFFICULTY_LABELS[state.difficulty]}をえらんだよ！`;
+        }
+      });
+    });
+
+    updateStatus();
+  </script>
+</body>
+</html>
